@@ -1,0 +1,44 @@
+PROTOVIS-JAVA RESEARCH PROTOTYPE
+
+Protovis-Java is a partial implementation of the Protovis toolkit in the Java
+programming language. It is a research project exploring how Protovis'
+declarative approach to visualization design can be implemented and optimized
+in a statically-typed, object-oriented language. We demonstrate how to support
+rich visualizations without requiring a toolkit-specific data model and extend
+Protovis to enable declarative specification of animated transitions. To
+support cross-platform deployment, we introduce rendering and event-handling
+infrastructures decoupled from the runtime platform.
+
+For more information about the design of the system, see our InfoVis 2010
+paper: http://vis.stanford.edu/papers/protovis-design
+
+This software package provides only a partial implementation of the full
+Protovis language and includes only selected subcomponents explored during
+our research. Please note that this is *only* a research prototype! It is not
+intended to be a production-ready toolkit and we do not provide software
+support as of this time. The code is also missing many of the library routines
+familiar to Protovis-Javascript users. For a complete, production-ready
+system, we encourage you to use the fully supported JavaScript implementation,
+available at http://protovis.org
+
+We provide the code here freely for others to use and modify, and as
+supporting material for our research paper and benchmarks. Protovis-Java is
+released as open source software under a BSD license. Please see the
+included protovis-license.txt file for the licensing terms.
+
+-----
+
+The software consists of 3 sub-projects:
+
+protovis            -> The Protovis-Java language implementation
+protovis-benchmarks -> Code for performance benchmarks in the research paper
+protovis-examples   -> Example Protovis applications
+
+Each sub-project includes .classpath and .project files for use in Eclipse.
+
+The "build" directory contains pre-compiled jar files and dependencies, as
+well as scripts to launch the various examples. The "lib" folder includes
+platform-specific JOGL 1.1 libraries for Mac OS X. To run examples under
+Windows or Linux, you will need to download platform-specific binaries for
+those systems and place them in the folder. You can search for these files at
+https://jogl.dev.java.net/servlets/ProjectDocumentList?folderID=9260&expandFolder=9260&folderID=0

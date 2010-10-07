@@ -1,0 +1,192 @@
+package pv.temp;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import pv.mark.Mark;
+import pv.mark.MarkEvent;
+import pv.mark.Scene;
+import pv.mark.Variable;
+import pv.mark.constants.*;
+import pv.mark.eval.EventHandler;
+import pv.mark.property.*;
+import pv.scene.*;
+import pv.style.*;
+import pv.util.Objects;
+
+{{IMPORTS}}
+public class {{CLASSNAME}} extends pv.mark.eval.ItemEvaluator {
+
+	public int _props;
+	public boolean _hasKey = {{HAS_KEY}};
+	public Scene _scene;
+	
+	// DECLARATIONS
+{{DECLARATIONS}}
+
+	public Class<?> datatype() { return {{DATATYPE}}.class; }
+	
+	public Object key({{DATATYPE}} data, int index) {
+{{KEY}}	}
+	
+	protected Object getData(GroupItem item) {
+		{{PANEL_DATATYPE}} data = ({{PANEL_DATATYPE}}) item.group.data;
+{{DATA}}
+	}
+	
+	public GroupItem build(Mark mark, GroupItem proto, PanelItem panel, boolean animate) {
+{{VARS}}
+		_scene = mark.scene();
+		GroupItem group = getGroup(mark, proto, panel);
+		group.modified(false);
+		Iterable<?> _data_ = data(group);
+				
+		// BUILD LOOKUP TABLE
+		Map<Object,Item> map = null;
+		if (animate && _hasKey) {
+			map = (Map<Object,Item>) Objects.Map.get();
+			for (int i=0; i<group.size(); ++i) {
+				Item item = group.item(i);
+				Object key = key(({{DATATYPE}})item.data, item.index);
+				map.put(key, item);
+			}
+			group.items.clear();
+		}
+	
+		// GENERATE ITEMS
+		int index = 0;
+		for (Object datum : _data_) {
+			{{DATATYPE}} data = ({{DATATYPE}}) datum;
+			
+			// GET SCENEGRAPH ITEM
+			{{ITEMTYPE}} item = null;
+			if (map != null) {
+				item = ({{ITEMTYPE}}) map.remove(key(data, index));
+			}
+			if (item != null) {
+				group.add(item);
+				item.index = index;
+			} else if (group.items.size() > index) {
+				item = ({{ITEMTYPE}}) group.item(index);
+			} else {
+				item = new {{ITEMTYPE}}();
+				group.add(item);
+				item.group = group;
+				item.index = index;
+				item.born(true);
+			}
+	
+			if (animate) {
+				Item prev = item.next, next;
+				if (prev == null) {
+					prev = (item.next = new {{ITEMTYPE}}()); prev.group = group;
+					next = (prev.next = new {{ITEMTYPE}}()); next.group = group;
+				} else {
+					next = prev.next;
+				}
+				prev.index = item.index;
+				prev.populate(item);
+			}
+			item.zombie(false);
+			item.dead(false);
+			if (item.data != data) {
+				item.data = data;
+				group.modified(true);
+			}
+			index += 1;
+		}
+		if (index != group.size())
+			group.dirty(true);
+		
+		// PRESIZE PANEL INSTANCES
+		if (mark.markType() == MarkType.Panel) {
+			int panelSize = mark.panelSize();
+			for (int i=0; i<group.size(); ++i) {
+				PanelItem item = (PanelItem) group.item(i);
+				while (item.size() < panelSize) {
+					item.add(null);
+				}
+			}
+		}
+		
+		// PROCESS ZOMBIE ITEMS
+		int idx = index;
+		if (map != null) {
+			for (Item item : map.values()) {
+				if (item.dead()) {
+					group.modified(true);
+					continue;
+				}
+				item.zombie(true);
+				if (item.next == null) {
+					item.next = new {{ITEMTYPE}}();
+					item.next.next = new {{ITEMTYPE}}();
+					item.next.group = group;
+					item.next.next.group = group;
+				}
+				item.next.populate(item);
+				group.add(item);
+				idx += 1;
+			}
+			Objects.Map.reclaim(map);
+		} 
+		
+		// remove extra items if length changes
+		group.discard(idx);
+		
+		// EVALUATE GROUP PROPERTIES
+		{
+			GroupItem item = group;
+			Item parent = item.group;
+			item.handlers = mark.propertySet().handlers;
+{{GROUP}}
+			// FIRE BUILD EVENT
+			MarkEvent.fire(MarkEvent.create(Events.build), item, item);
+		}
+		return group;
+	}
+	
+	public void evaluate(GroupItem group, int start, int end, boolean animate) {
+		for (int __i=start; __i<end; ++__i) {
+			{{ITEMTYPE}} item = ({{ITEMTYPE}}) group.item(__i);
+			{{DATATYPE}} data = ({{DATATYPE}}) item.data;
+			Item proto = item.proto();
+			Item cousin = item.cousin();
+			Item parent = item.parent();
+			int index = item.index;
+			boolean zombie = item.zombie();
+			
+			// EVALUATE PROPERTIES
+{{INSTANCE}}
+			if (zombie) {
+	{{EXIT}}
+			}
+			item.buildImplied(_props);
+			
+			if (animate) {
+				Item orig = item;
+				item.next.next.populate(item);
+				if (item.born()) {
+					item.born(false);
+					item.next.populate(item);
+					item = ({{ITEMTYPE}}) item.next;
+{{ENTER}}
+					item.buildImplied(_props);
+				} else if (!zombie) {
+					item.populate(item.next);
+				}
+				group.props = orig.checkInterpolatedProperties(group.props); 
+			} else {
+				item.born(false);
+			}
+		}
+	}
+	
+	private void update() {
+		_scene.update();
+	}
+	
+{{HANDLERS}}
+	
+}
